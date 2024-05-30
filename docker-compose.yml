@@ -1,0 +1,58 @@
+version: '2.0'
+services:
+  app:
+    build:
+      context: ./app/.
+      dockerfile: Dockerfile
+    container_name: BaseGPT_Backend
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    working_dir: /var/www/html/
+    volumes:
+      - ./app:/var/www/html/
+      - ./app/php/laravel.ini:/usr/local/etc/php/conf.d/laravel.ini
+    networks:
+      - BaseGPT-network
+  webserver:
+    image: nginx:alpine
+    container_name: BaseGPT_Frontend
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./app/:/var/www/html/
+      - ./app/nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - BaseGPT-network
+  db:
+    image: mysql:5.7.32
+    container_name: BaseGPT_Database
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: BaseGPT_db
+      MYSQL_ROOT_PASSWORD: 23031996
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - ./data:/var/lib/mysql/
+    networks:
+      - BaseGPT-network
+  adminer:
+    image: adminer
+    restart: always
+    networks:
+      - BaseGPT-network
+    ports:
+      - 8080:8080
+
+networks:
+  BaseGPT-network:
+    driver: bridge
